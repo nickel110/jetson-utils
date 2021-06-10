@@ -59,7 +59,7 @@ videoSource* videoSource::Create( const videoOptions& options )
 	{
 		src = gstDecoder::Create(options);
 	}
-	else if( uri.protocol == "csi" || uri.protocol == "v4l2" )
+	else if( uri.protocol == "csi" || uri.protocol == "v4l2" || uri.protocol == "thetauvc" )
 	{
 		src = gstCamera::Create(options);
 	}

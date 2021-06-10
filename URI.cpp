@@ -144,6 +144,13 @@ bool URI::Parse( const char* uri )
 	{
 		extension = fileExtension(location);
 	}
+	else if( protocol == "thetauvc" ) {
+		if( sscanf(location.c_str(), "%i", &port) != 1)
+		{
+			LogError("URI -- failed to parse thetauvc deice number %s\n", location.c_str());
+			return false;
+		}
+	}
 	else
 	{		
 		// search for ip/port format

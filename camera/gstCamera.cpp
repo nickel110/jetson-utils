@@ -151,7 +151,11 @@ bool gstCamera::buildLaunchStr()
 	}
 	else
 	{
-		ss << "v4l2src device=" << mOptions.resource.location << " ! ";
+		if( mOptions.resource.protocol == "thetauvc" ) {
+			ss << "thetauvcsrc device-number=" << mOptions.resource.location;
+			ss << " mode="	<< (GetWidth() == 3840 ? "4K" : "2K" ) << " ! ";
+		} else
+			ss << "v4l2src device=" << mOptions.resource.location << " ! ";
 		
 		if( mOptions.codec != videoOptions::CODEC_UNKNOWN )
 		{
@@ -165,8 +169,11 @@ bool gstCamera::buildLaunchStr()
 		
 		//ss << "queue max-size-buffers=16 ! ";
 
-		if( mOptions.codec == videoOptions::CODEC_H264 )
-			ss << "h264parse ! omxh264dec ! video/x-raw ! ";
+		if( mOptions.codec == videoOptions::CODEC_H264 ) {
+			if (mOptions.resource.protocol == "thetauvc" )
+				ss << " h264parse ! ";
+			ss << " nvv4l2decoder ! nvvidconv ! video/x-raw ! ";
+		}
 		else if( mOptions.codec == videoOptions::CODEC_H265 )
 			ss << "h265parse ! omxh265dec ! video/x-raw ! ";
 		else if( mOptions.codec == videoOptions::CODEC_VP8 )
@@ -442,7 +449,16 @@ bool gstCamera::init()
 	LogInfo(LOG_GSTREAMER "gstCamera -- attempting to create device %s\n", GetResource().c_str());
 
 	// discover device stats
-	if( !discover() )
+	if( mOptions.resource.protocol == "thetauvc" ) {
+		if( mOptions.width == 0)
+			mOptions.width = 1920;
+		if( mOptions.height == 0)
+			mOptions.height = 960;
+		mOptions.codec = videoOptions::CODEC_H264;
+		mOptions.frameRate = 29.97;
+		LogWarning(LOG_GSTREAMER "thetauvc\n");
+	}
+	else if( !discover() )
 	{
 		if( mOptions.resource.protocol == "v4l2" && fileExists(mOptions.resource.location) )
 		{
@@ -455,7 +471,7 @@ bool gstCamera::init()
 			return false;
 		}
 	}
-	
+
 	// build pipeline string
 	if( !buildLaunchStr() )
 	{
